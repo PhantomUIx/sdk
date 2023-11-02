@@ -96,7 +96,7 @@ pub fn build(b: *std.Build) void {
             for (module, 0..) |el, i| {
                 const d = if (i == 0) "" else blk: {
                     const p = std.mem.join(b.allocator, ".", module[0..i]) catch |e| @panic(@errorName(e));
-                    break :blk b.fmt(".{s}", .{p}) catch |e| @panic(@errorName(e));
+                    break :blk b.fmt(".{s}", .{p});
                 };
 
                 importer_data.writer().print(
