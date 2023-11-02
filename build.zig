@@ -23,7 +23,7 @@ const availableDepenencies = blk: {
 
 fn importPkg(b: *std.Build, name: []const u8, comptime pkgId: []const u8, args: anytype) *std.Build.Dependency {
     const buildDeps = @import("root").dependencies;
-    const pkg = @field(buildDeps.package, pkgId);
+    const pkg = @field(buildDeps.packages, pkgId);
     return b.dependencyInner(name, pkg.build_root, if (@hasDecl(pkg, "build_zig")) pkg.build_zig else null, pkg.deps, args);
 }
 
@@ -91,7 +91,7 @@ pub fn build(b: *std.Build) void {
             importer_data.writer().print(
                 \\pub usingnamespace blk: {{
                 \\    const imports = @import("{s}");
-            , .{dep[0][8..dep[0].len]}) catch |e| @panic(@errorName(e));
+            , .{dep[0]}) catch |e| @panic(@errorName(e));
 
             for (module, 0..) |el, i| {
                 const d = if (i == 0) "" else blk: {
@@ -130,7 +130,10 @@ pub fn build(b: *std.Build) void {
     var importer_deps: [availableDepenencies.len]std.Build.ModuleDependency = undefined;
     inline for (availableDepenencies, 0..) |dep, i| {
         const imported_dep = @field(deps, dep[0][8..dep[0].len]);
-        importer_deps[i] = imported_dep.module(dep[0]);
+        importer_deps[i] = .{
+            .name = dep[0],
+            .module = imported_dep.module(dep[0]),
+        };
     }
 
     const importer_gen = gen.add("phantom.imports.zig", importer_data.items);
