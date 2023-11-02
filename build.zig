@@ -78,9 +78,9 @@ pub fn build(b: *std.Build) void {
     };
 
     importer_data.writer().print(
-        \\pub fn import(comptime phantom: type) type {{
+        \\pub fn import(comptime {s}: type) type {{
         \\  return struct {{
-    , .{}) catch |e| @panic(@errorName(e));
+    , .{if (availableDepenencies.len > 0) "phantom" else "_"}) catch |e| @panic(@errorName(e));
 
     // TODO: as all modules are expected to follow the same layout as core,
     // we can do a file/directory check for specific files.
