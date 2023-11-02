@@ -77,6 +77,11 @@ pub fn build(b: *std.Build) void {
         &[_][]const u8{"i18n"},
     };
 
+    importer_data.writer().print(
+        \\pub fn Importer(comptime phantom: type) type {{
+        \\  return struct {{
+    , .{}) catch |e| @panic(@errorName(e));
+
     // TODO: as all modules are expected to follow the same layout as core,
     // we can do a file/directory check for specific files.
     // However, there could be some exceptions...
@@ -90,7 +95,7 @@ pub fn build(b: *std.Build) void {
         inline for (availableDepenencies) |dep| {
             importer_data.writer().print(
                 \\pub usingnamespace blk: {{
-                \\    const imports = @import("{s}");
+                \\    const imports = @import("{s}")(phantom);
             , .{dep[0]}) catch |e| @panic(@errorName(e));
 
             for (module, 0..) |el, i| {
@@ -126,6 +131,11 @@ pub fn build(b: *std.Build) void {
             , .{}) catch |e| @panic(@errorName(e));
         }
     }
+
+    importer_data.writer().print(
+        \\  }};
+        \\}}
+    , .{}) catch |e| @panic(@errorName(e));
 
     var importer_deps: [availableDepenencies.len]std.Build.ModuleDependency = undefined;
     inline for (availableDepenencies, 0..) |dep, i| {
