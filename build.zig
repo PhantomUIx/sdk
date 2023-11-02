@@ -62,6 +62,7 @@ pub fn dependencies(b: *std.Build, args: anytype) Dependencies() {
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const modulesRaw = b.option([]const []const u8, "modules", "List of modules") orelse &[_][]const u8{};
 
     const deps = dependencies(b, .{
         .target = target,
@@ -72,11 +73,6 @@ pub fn build(b: *std.Build) void {
     var importer_data = std.ArrayList(u8).init(b.allocator);
     defer importer_data.deinit();
 
-    const modules = [_][]const []const u8{
-        &[_][]const u8{ "scene", "backends" },
-        &[_][]const u8{"i18n"},
-    };
-
     importer_data.writer().print(
         \\pub fn import(comptime {s}: type) type {{
         \\  return struct {{
@@ -85,8 +81,10 @@ pub fn build(b: *std.Build) void {
     // TODO: as all modules are expected to follow the same layout as core,
     // we can do a file/directory check for specific files.
     // However, there could be some exceptions...
-    for (modules) |module| {
-        for (module) |el| {
+    for (modulesRaw) |module| {
+        var modSplit = std.mem.splitAny(u8, module, ".");
+
+        while (modSplit.next()) |el| {
             importer_data.writer().print(
                 \\pub const {s} = struct {{
             , .{el}) catch |e| @panic(@errorName(e));
@@ -98,7 +96,9 @@ pub fn build(b: *std.Build) void {
                 \\    const imports = @import("{s}").import(phantom);
             , .{dep[0]}) catch |e| @panic(@errorName(e));
 
-            for (module, 0..) |el, i| {
+            modSplit.reset();
+            var i: usize = 0;
+            while (modSplit.next()) |el| {
                 const d = if (i == 0) "" else blk: {
                     const p = std.mem.join(b.allocator, ".", module[0..i]) catch |e| @panic(@errorName(e));
                     break :blk b.fmt(".{s}", .{p});
@@ -107,13 +107,16 @@ pub fn build(b: *std.Build) void {
                 importer_data.writer().print(
                     \\if (@hasDecl(imports{s}, "{s}")) {{
                 , .{ d, el }) catch |e| @panic(@errorName(e));
+
+                i += 1;
             }
 
             importer_data.writer().print(
                 \\break :blk imports.{s};
             , .{std.mem.join(b.allocator, ".", module) catch |e| @panic(@errorName(e))}) catch |e| @panic(@errorName(e));
 
-            for (module) |_| {
+            modSplit.reset();
+            while (modSplit.next()) |_| {
                 importer_data.writer().print(
                     \\}}
                 , .{}) catch |e| @panic(@errorName(e));
@@ -125,7 +128,8 @@ pub fn build(b: *std.Build) void {
             , .{}) catch |e| @panic(@errorName(e));
         }
 
-        for (module) |_| {
+        modSplit.reset();
+        while (modSplit.next()) |_| {
             importer_data.writer().print(
                 \\}};
             , .{}) catch |e| @panic(@errorName(e));
