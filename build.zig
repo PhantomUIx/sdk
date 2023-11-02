@@ -78,7 +78,7 @@ pub fn build(b: *std.Build) void {
     };
 
     importer_data.writer().print(
-        \\pub fn Importer(comptime phantom: type) type {{
+        \\pub fn import(comptime phantom: type) type {{
         \\  return struct {{
     , .{}) catch |e| @panic(@errorName(e));
 
@@ -95,7 +95,7 @@ pub fn build(b: *std.Build) void {
         inline for (availableDepenencies) |dep| {
             importer_data.writer().print(
                 \\pub usingnamespace blk: {{
-                \\    const imports = @import("{s}")(phantom);
+                \\    const imports = @import("{s}").import(phantom);
             , .{dep[0]}) catch |e| @panic(@errorName(e));
 
             for (module, 0..) |el, i| {
