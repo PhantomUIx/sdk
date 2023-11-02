@@ -63,9 +63,9 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const modulesRaw = b.option([]const []const u8, "modules", "List of modules") orelse &[_][]const u8{
+        "display.backends",
         "scene.backends",
         "i18n",
-        "display",
     };
 
     const deps = dependencies(b, .{
