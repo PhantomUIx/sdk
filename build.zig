@@ -4,6 +4,7 @@ const AvailableDep = struct { []const u8, []const u8 };
 const AvailableDeps = []const AvailableDep;
 
 pub const PhantomModule = struct {
+    // TODO: expected version of core and sdk
     provides: ?Provides = null,
     dependencies: ?[]const []const u8 = null,
 
@@ -265,29 +266,30 @@ pub fn build(b: *std.Build) void {
         }
     }
 
-    const phantomCore = blk: {
-        const buildDeps = @import("root").dependencies;
-        inline for (buildDeps.root_deps) |dep| {
-            if (std.mem.eql(u8, dep[0], "phantom")) {
-                break :blk importPkgExclude(b, dep[0], dep[1], &.{"phantom-sdk"}, .{
-                    .target = target,
-                    .optimize = optimize,
-                    .@"no-importer" = true,
-                });
-            }
-        }
-
-        break :blk null;
-    };
-
     var importer_deps: [availableDepenencies.len]std.Build.ModuleDependency = undefined;
     inline for (availableDepenencies, 0..) |dep, i| {
         const pkg = @field(@import("root").dependencies.packages, dep[1]);
         const imported_dep = @field(deps, dep[0]);
         const origModule = imported_dep.module(dep[0]);
 
+        // TODO: expected version check
+
         var depsList = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
         errdefer depsList.deinit();
+
+        const phantomCore = blk: {
+            inline for (pkg.deps) |childDeps| {
+                if (std.mem.eql(u8, childDeps[0], "phantom")) {
+                    // TODO: expected version check
+                    break :blk importPkgExclude(origModule.builder, childDeps[0], childDeps[1], &.{"phantom-sdk"}, .{
+                        .target = target,
+                        .optimize = optimize,
+                        .@"no-importer" = true,
+                    });
+                }
+            }
+            break :blk null;
+        };
 
         if (phantomCore) |m| {
             depsList.append(.{
