@@ -241,7 +241,7 @@ pub fn build(b: *std.Build) void {
             }
         }
 
-        @panic("Cannot find Phantom UI core");
+        break :blk null;
     };
 
     var importer_deps: [availableDepenencies.len]std.Build.ModuleDependency = undefined;
@@ -253,10 +253,12 @@ pub fn build(b: *std.Build) void {
         var depsList = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
         errdefer depsList.deinit();
 
-        depsList.append(.{
-            .name = "phantom",
-            .module = phantomCore.module("phantom"),
-        }) catch @panic("OOM");
+        if (phantomCore) |m| {
+            depsList.append(.{
+                .name = "phantom",
+                .module = m.module("phantom"),
+            }) catch @panic("OOM");
+        }
 
         for (pkg.build_zig.phantomModule.getDependencies()) |depName| {
             depsList.append(origModule.builder.dependency(depName).module(depName)) catch @panic("OOM");
