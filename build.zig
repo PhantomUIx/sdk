@@ -127,7 +127,7 @@ fn importPkgExclude(b: *std.Build, name: []const u8, comptime pkgId: []const u8,
                 }
             }
         }
-        const deps: [count]AvailableDep = undefined;
+        var deps: [count]AvailableDep = undefined;
 
         var i: usize = 0;
         inline for (pkg.deps) |d| {
@@ -139,7 +139,7 @@ fn importPkgExclude(b: *std.Build, name: []const u8, comptime pkgId: []const u8,
                 }
             }
         }
-        break :blk deps;
+        break :blk &deps;
     };
 
     return b.dependencyInner(name, pkg.build_root, if (@hasDecl(pkg, "build_zig")) pkg.build_zig else null, deps, args);
