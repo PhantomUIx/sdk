@@ -154,11 +154,14 @@ pub fn dependencies(b: *std.Build, args: anytype) Dependencies() {
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const no_importer = b.option(bool, "no-importer", "disables the import system (not recommended)") orelse false;
     const modulesRaw = b.option([]const []const u8, "modules", "List of modules") orelse &[_][]const u8{
         "display.backends",
         "scene.backends",
         "i18n",
     };
+
+    if (no_importer) return;
 
     const deps = dependencies(b, .{
         .target = target,
