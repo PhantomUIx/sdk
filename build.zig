@@ -34,7 +34,8 @@ pub const availableDepenencies = blk: {
     var count: usize = 0;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig) |buildZig| {
+        if (pkg.build_zig != null) {
+            const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 count += 1;
             }
@@ -45,7 +46,8 @@ pub const availableDepenencies = blk: {
     var deps: [count]AvailableDep = undefined;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig) |buildZig| {
+        if (pkg.build_zig != null) {
+            const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 deps[i] = dep;
                 i += 1;
@@ -61,7 +63,8 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
     var fieldCount: usize = 0;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig) |buildZig| {
+        if (pkg.build_zig != null) {
+            const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 const mod = buildZig.phantomModule;
                 fieldCount += mod.getProvider().count(kind);
@@ -84,7 +87,8 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
     var i: usize = 0;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig) |buildZig| {
+        if (pkg.build_zig != null) {
+            const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 const mod = buildZig.phantomModule;
 
@@ -251,7 +255,7 @@ pub fn build(b: *std.Build) void {
             .module = phantomCore.module("phantom"),
         }) catch @panic("OOM");
 
-        for (pkg.build_zig.?.phantomModule.getDependencies()) |depName| {
+        for (pkg.build_zig.phantomModule.getDependencies()) |depName| {
             const buildDeps = @import("root").dependencies;
             var found = false;
             for (buildDeps.root_deps) |d| {
