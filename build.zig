@@ -11,7 +11,7 @@ pub const PhantomModule = struct {
         scenes: ?[]const []const u8 = null,
         displays: ?[]const []const u8 = null,
 
-        pub fn value(self: Provides, kind: std.meta.FieldEnum(Provides)) [][]const u8 {
+        pub fn value(self: Provides, kind: std.meta.FieldEnum(Provides)) []const []const u8 {
             return (switch (kind) {
                 .scenes => self.scenes,
                 .displays => self.displays,
