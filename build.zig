@@ -268,7 +268,7 @@ pub fn build(b: *std.Build) void {
                 break :blk importPkgExclude(b, dep[0], dep[1], &.{"phantom-sdk"}, .{
                     .target = target,
                     .optimize = optimize,
-                    .no_importer = true,
+                    .@"no-importer" = true,
                 });
             }
         }
