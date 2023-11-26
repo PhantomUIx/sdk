@@ -15,7 +15,6 @@ pub const PhantomModule = struct {
             return (switch (kind) {
                 .scenes => self.scenes,
                 .displays => self.displays,
-                else => null,
             }) orelse &[_][]const u8{};
         }
 
