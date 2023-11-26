@@ -26,6 +26,10 @@ pub const PhantomModule = struct {
     pub fn getProvider(self: PhantomModule) Provides {
         return if (self.provides) |value| value else .{};
     }
+
+    pub fn getDependencies(self: PhantomModule) []const []const u8 {
+        return self.dependencies orelse &[_][]const u8{};
+    }
 };
 
 pub const availableDepenencies = blk: {
