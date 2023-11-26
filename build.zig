@@ -5,11 +5,11 @@ const AvailableDeps = []const AvailableDep;
 
 pub const PhantomModule = struct {
     provides: ?Provides = null,
-    dependencies: ?[][]const u8 = null,
+    dependencies: ?[]const []const u8 = null,
 
     pub const Provides = struct {
-        scenes: ?[][]const u8 = null,
-        displays: ?[][]const u8 = null,
+        scenes: ?[]const []const u8 = null,
+        displays: ?[]const []const u8 = null,
 
         pub fn value(self: Provides, kind: std.meta.FieldEnum(Provides)) [][]const u8 {
             return (switch (kind) {
