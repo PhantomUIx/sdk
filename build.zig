@@ -3,7 +3,7 @@ const std = @import("std");
 const AvailableDep = struct { []const u8, []const u8 };
 const AvailableDeps = []const AvailableDep;
 
-const availableDepenencies = blk: {
+pub const availableDepenencies = blk: {
     const buildDeps = @import("root").dependencies;
     var count: usize = 0;
     for (buildDeps.root_deps) |dep| {
