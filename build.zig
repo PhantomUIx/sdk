@@ -103,10 +103,7 @@ pub fn build(b: *std.Build) void {
             modSplit.reset();
             var i: usize = 0;
             while (modSplit.next()) |el| {
-                const d = if (i == 0) "" else blk: {
-                    const p = std.mem.join(b.allocator, ".", module[0..i]) catch |e| @panic(@errorName(e));
-                    break :blk b.fmt(".{s}", .{p});
-                };
+                const d = if (i < 1) "" else b.fmt(".{s}", .{module[0..(modSplit.index orelse module.len - 1)]});
 
                 importer_data.writer().print(
                     \\if (@hasDecl(imports{s}, "{s}")) {{
@@ -117,7 +114,7 @@ pub fn build(b: *std.Build) void {
 
             importer_data.writer().print(
                 \\break :blk imports.{s};
-            , .{std.mem.join(b.allocator, ".", module) catch |e| @panic(@errorName(e))}) catch |e| @panic(@errorName(e));
+            , .{module}) catch |e| @panic(@errorName(e));
 
             modSplit.reset();
             while (modSplit.next()) |_| {
