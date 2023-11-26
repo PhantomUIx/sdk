@@ -34,7 +34,7 @@ pub const availableDepenencies = blk: {
     var count: usize = 0;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig != null) {
+        if (@hasDecl(pkg, "build_zig")) {
             const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 count += 1;
@@ -46,7 +46,7 @@ pub const availableDepenencies = blk: {
     var deps: [count]AvailableDep = undefined;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig != null) {
+        if (@hasDecl(pkg, "build_zig")) {
             const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 deps[i] = dep;
@@ -63,7 +63,7 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
     var fieldCount: usize = 0;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig != null) {
+        if (@hasDecl(pkg, "build_zig")) {
             const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 const mod = buildZig.phantomModule;
@@ -87,7 +87,7 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
     var i: usize = 0;
     for (buildDeps.root_deps) |dep| {
         const pkg = @field(buildDeps.packages, dep[1]);
-        if (pkg.build_zig != null) {
+        if (@hasDecl(pkg, "build_zig")) {
             const buildZig = pkg.build_zig;
             if (@hasDecl(buildZig, "phantomModule") and @TypeOf(@field(buildZig, "phantomModule")) == PhantomModule) {
                 const mod = buildZig.phantomModule;
@@ -256,23 +256,7 @@ pub fn build(b: *std.Build) void {
         }) catch @panic("OOM");
 
         for (pkg.build_zig.phantomModule.getDependencies()) |depName| {
-            const buildDeps = @import("root").dependencies;
-            var found = false;
-            for (buildDeps.root_deps) |d| {
-                if (std.mem.eql(u8, d[0], depName)) {
-                    const depDep = importPkg(b, d[0], d[1], .{
-                        .target = target,
-                        .optimize = optimize,
-                        .no_importer = true,
-                    });
-
-                    depsList.append(depDep.module(d[0])) catch @panic("OOM");
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) std.debug.panic("Could not find dependency {s} for {s}", .{ depName, dep[0] });
+            depsList.append(origModule.builder.dependency(depName).module(depName)) catch @panic("OOM");
         }
 
         importer_deps[i] = .{
