@@ -117,7 +117,7 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
     });
 }
 
-fn importPkgExclude(b: *std.Build, name: []const u8, comptime pkgId: []const u8, comptime exclude: []const []const u8, args: anytype) *std.Build.Dependency {
+fn importPkgCustom(b: *std.Build, name: []const u8, buildRoot: []const u8, comptime pkgId: []const u8, comptime exclude: []const []const u8, args: anytype) *std.Build.Dependency {
     const buildDeps = @import("root").dependencies;
     const pkg = @field(buildDeps.packages, pkgId);
     const deps: AvailableDeps = comptime blk: {
@@ -146,7 +146,7 @@ fn importPkgExclude(b: *std.Build, name: []const u8, comptime pkgId: []const u8,
         break :blk &deps;
     };
 
-    return b.dependencyInner(name, pkg.build_root, if (@hasDecl(pkg, "build_zig")) pkg.build_zig else null, deps, args);
+    return b.dependencyInner(name, buildRoot, if (@hasDecl(pkg, "build_zig")) pkg.build_zig else null, deps, args);
 }
 
 fn importPkg(b: *std.Build, name: []const u8, comptime pkgId: []const u8, args: anytype) *std.Build.Dependency {
@@ -286,16 +286,18 @@ pub fn build(b: *std.Build) void {
         const phantomCore = blk: {
             inline for (pkg.deps) |childDeps| {
                 if (std.mem.eql(u8, childDeps[0], "phantom")) {
+                    const subpkg = @field(@import("root").dependencies.packages, childDeps[1]);
                     // TODO: expected version check
                     const newPath = b.pathJoin(&.{ b.cache_root.path.?, "p", std.fs.path.basename(dep[1]), std.fs.path.basename(childDeps[1]) });
-                    if (!doesExist(std.fs.path.dirname(newPath))) {
-                        std.fs.cwd().makePath(std.fs.path.dirname(newPath)) catch |e| std.debug.panic("Failed to create path {s}: {s}", .{ std.fs.path.dirname(newPath), @errorName(e) });
+
+                    if (!doesExist(std.fs.path.dirname(newPath).?, .{})) {
+                        std.fs.cwd().makePath(std.fs.path.dirname(newPath).?) catch |e| std.debug.panic("Failed to create path {s}: {s}", .{ std.fs.path.dirname(newPath).?, @errorName(e) });
                     }
 
-                    if (!doesExist(newPath)) {
-                        std.fs.symLinkAbsolute(childDeps[1], newPath, .{ .is_directory = true }) catch |e| std.debug.panic("Failed to create symlink {s}: {s}", .{ newPath, @errorName(e) });
+                    if (!doesExist(newPath, .{})) {
+                        std.fs.symLinkAbsolute(subpkg.build_root, newPath, .{ .is_directory = true }) catch |e| std.debug.panic("Failed to create symlink {s}: {s}", .{ newPath, @errorName(e) });
                     }
-                    break :blk importPkgExclude(origModule.builder, childDeps[0], newPath, &.{"phantom-sdk"}, .{
+                    break :blk importPkgCustom(origModule.builder, childDeps[0], newPath, childDeps[1], &.{"phantom-sdk"}, .{
                         .target = target,
                         .optimize = optimize,
                         .@"no-importer" = true,
