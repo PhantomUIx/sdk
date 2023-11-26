@@ -21,6 +21,37 @@ pub const availableDepenencies = blk: {
     break :blk deps;
 };
 
+pub fn TypeFor(comptime prefix: []const u8) type {
+    const buildDeps = @import("root").dependencies;
+
+    var fieldCount: usize = 0;
+    for (buildDeps.root_deps) |dep| {
+        if (std.mem.startsWith(u8, dep[0], "phantom." ++ prefix)) fieldCount += 1;
+    }
+
+    var fields: [fieldCount]std.builtin.Type.EnumField = undefined;
+    var i: usize = 0;
+    for (buildDeps.root_deps) |dep| {
+        if (std.mem.startsWith(u8, dep[0], "phantom." ++ prefix)) {
+            fields[i] = .{
+                .name = dep[0][("phantom." ++ prefix).len..],
+                .value = i,
+            };
+
+            i += 1;
+        }
+    }
+
+    return @Type(.{
+        .Enum = .{
+            .tag_type = std.math.IntFittingRange(0, fields.len - 1),
+            .fields = &fields,
+            .decls = &.{},
+            .is_exhaustive = true,
+        },
+    });
+}
+
 fn importPkg(b: *std.Build, name: []const u8, comptime pkgId: []const u8, args: anytype) *std.Build.Dependency {
     const buildDeps = @import("root").dependencies;
     const pkg = @field(buildDeps.packages, pkgId);
