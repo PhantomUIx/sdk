@@ -203,6 +203,7 @@ pub fn build(b: *std.Build) void {
     const deps = dependencies(b, .{
         .target = target,
         .optimize = optimize,
+        .@"no-importer" = true,
     });
 
     const gen = b.addWriteFiles();
