@@ -29,6 +29,17 @@ pub fn TypeFor(comptime prefix: []const u8) type {
         if (std.mem.startsWith(u8, dep[0], "phantom." ++ prefix)) fieldCount += 1;
     }
 
+    if (fieldCount == 0) {
+        return @Type(.{
+            .Enum = .{
+                .tag_type = u0,
+                .fields = &.{},
+                .decls = &.{},
+                .is_exhaustive = true,
+            },
+        });
+    }
+
     var fields: [fieldCount]std.builtin.Type.EnumField = undefined;
     var i: usize = 0;
     for (buildDeps.root_deps) |dep| {
