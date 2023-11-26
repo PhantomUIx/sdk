@@ -113,6 +113,38 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
     });
 }
 
+fn importPkgExclude(b: *std.Build, name: []const u8, comptime pkgId: []const u8, comptime exclude: [][]const u8, args: anytype) *std.Build.Dependency {
+    const buildDeps = @import("root").dependencies;
+    const pkg = @field(buildDeps.packages, pkgId);
+    const deps: AvailableDeps = comptime blk: {
+        var count: usize = 0;
+
+        inline for (pkg.deps) |d| {
+            inline for (exclude) |e| {
+                if (!std.mem.eql(u8, d[0], e)) {
+                    count += 1;
+                    break;
+                }
+            }
+        }
+        const deps: [count]AvailableDep = undefined;
+
+        var i: usize = 0;
+        inline for (pkg.deps) |d| {
+            inline for (exclude) |e| {
+                if (!std.mem.eql(u8, d[0], e)) {
+                    deps[i] = d;
+                    i += 1;
+                    break;
+                }
+            }
+        }
+        break :blk deps;
+    };
+
+    return b.dependencyInner(name, pkg.build_root, if (@hasDecl(pkg, "build_zig")) pkg.build_zig else null, deps, args);
+}
+
 fn importPkg(b: *std.Build, name: []const u8, comptime pkgId: []const u8, args: anytype) *std.Build.Dependency {
     const buildDeps = @import("root").dependencies;
     const pkg = @field(buildDeps.packages, pkgId);
@@ -233,7 +265,7 @@ pub fn build(b: *std.Build) void {
         const buildDeps = @import("root").dependencies;
         inline for (buildDeps.root_deps) |dep| {
             if (std.mem.eql(u8, dep[0], "phantom")) {
-                break :blk importPkg(b, dep[0], dep[1], .{
+                break :blk importPkgExclude(b, dep[0], dep[1], &.{"phantom-sdk"}, .{
                     .target = target,
                     .optimize = optimize,
                     .no_importer = true,
