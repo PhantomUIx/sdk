@@ -18,7 +18,7 @@ pub const PhantomModule = struct {
             }) orelse &[_][]const u8{};
         }
 
-        pub fn count(self: Provides, kind: std.meta.FieldEnum(Provides)) bool {
+        pub fn count(self: Provides, kind: std.meta.FieldEnum(Provides)) usize {
             return self.value(kind).len;
         }
     };
