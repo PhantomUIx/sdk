@@ -113,7 +113,7 @@ pub fn TypeFor(comptime kind: std.meta.FieldEnum(PhantomModule.Provides)) type {
     });
 }
 
-fn importPkgExclude(b: *std.Build, name: []const u8, comptime pkgId: []const u8, comptime exclude: [][]const u8, args: anytype) *std.Build.Dependency {
+fn importPkgExclude(b: *std.Build, name: []const u8, comptime pkgId: []const u8, comptime exclude: []const []const u8, args: anytype) *std.Build.Dependency {
     const buildDeps = @import("root").dependencies;
     const pkg = @field(buildDeps.packages, pkgId);
     const deps: AvailableDeps = comptime blk: {
