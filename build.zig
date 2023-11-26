@@ -103,7 +103,9 @@ pub fn build(b: *std.Build) void {
             modSplit.reset();
             var i: usize = 0;
             while (modSplit.next()) |el| {
-                const d = if (i < 1) "" else b.fmt(".{s}", .{module[0..(modSplit.index orelse module.len - 1)]});
+                const end = if (modSplit.index) |x| x + 1 else module.len - 1;
+                const y = std.mem.lastIndexOfLinear(u8, module[0..end], ".") orelse end;
+                const d = if (i < 1) "" else b.fmt(".{s}", .{module[0..y]});
 
                 importer_data.writer().print(
                     \\if (@hasDecl(imports{s}, "{s}")) {{
