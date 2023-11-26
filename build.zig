@@ -296,7 +296,12 @@ pub fn build(b: *std.Build) void {
         }
 
         for (pkg.build_zig.phantomModule.getDependencies()) |depName| {
-            depsList.append(origModule.builder.dependency(depName).module(depName)) catch @panic("OOM");
+            if (std.mem.eql(u8, depName, "phantom")) continue;
+
+            depsList.append(origModule.builder.dependency(depName, .{
+                .target = target,
+                .optimize = optimize,
+            }).module(depName)) catch @panic("OOM");
         }
 
         importer_deps[i] = .{
