@@ -45,7 +45,7 @@ pub fn TypeFor(comptime prefix: []const u8) type {
     for (buildDeps.root_deps) |dep| {
         if (std.mem.startsWith(u8, dep[0], "phantom." ++ prefix)) {
             fields[i] = .{
-                .name = dep[0][("phantom." ++ prefix).len..],
+                .name = dep[0][(("phantom." ++ prefix).len + 1)..],
                 .value = i,
             };
 
