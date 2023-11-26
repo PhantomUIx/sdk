@@ -228,7 +228,7 @@ pub fn build(b: *std.Build) void {
 
     const phantomCore = blk: {
         const buildDeps = @import("root").dependencies;
-        for (buildDeps.root_deps) |dep| {
+        inline for (buildDeps.root_deps) |dep| {
             if (std.mem.eql(u8, dep[0], "phantom")) {
                 break :blk importPkg(b, dep[0], dep[1], .{
                     .target = target,
@@ -247,7 +247,7 @@ pub fn build(b: *std.Build) void {
         const imported_dep = @field(deps, dep[0]);
         const origModule = imported_dep.module(dep[0]);
 
-        const depsList = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
+        var depsList = std.ArrayList(std.Build.ModuleDependency).init(b.allocator);
         errdefer depsList.deinit();
 
         depsList.append(.{
