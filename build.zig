@@ -187,6 +187,11 @@ pub fn dependencies(b: *std.Build, args: anytype) Dependencies() {
     return self;
 }
 
+inline fn doesExist(path: []const u8, flags: std.fs.File.OpenFlags) bool {
+    std.fs.accessAbsolute(path, flags) catch return false;
+    return true;
+}
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -282,7 +287,15 @@ pub fn build(b: *std.Build) void {
             inline for (pkg.deps) |childDeps| {
                 if (std.mem.eql(u8, childDeps[0], "phantom")) {
                     // TODO: expected version check
-                    break :blk importPkgExclude(origModule.builder, childDeps[0], childDeps[1], &.{"phantom-sdk"}, .{
+                    const newPath = b.pathJoin(&.{ b.cache_root.path.?, "p", std.fs.path.basename(dep[1]), std.fs.path.basename(childDeps[1]) });
+                    if (!doesExist(std.fs.path.dirname(newPath))) {
+                        std.fs.cwd().makePath(std.fs.path.dirname(newPath)) catch |e| std.debug.panic("Failed to create path {s}: {s}", .{ std.fs.path.dirname(newPath), @errorName(e) });
+                    }
+
+                    if (!doesExist(newPath)) {
+                        std.fs.symLinkAbsolute(childDeps[1], newPath, .{ .is_directory = true }) catch |e| std.debug.panic("Failed to create symlink {s}: {s}", .{ newPath, @errorName(e) });
+                    }
+                    break :blk importPkgExclude(origModule.builder, childDeps[0], newPath, &.{"phantom-sdk"}, .{
                         .target = target,
                         .optimize = optimize,
                         .@"no-importer" = true,
