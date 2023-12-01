@@ -199,6 +199,7 @@ pub fn build(b: *std.Build) void {
     const modulesRaw = b.option([]const []const u8, "modules", "List of modules") orelse &[_][]const u8{
         "display.backends",
         "gpu.backends",
+        "painting.image.formats",
         "scene.backends",
         "i18n",
     };
